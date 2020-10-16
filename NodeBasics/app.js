@@ -2,7 +2,14 @@
 
 const EventEmitter = require('events');
 
-/*
+const Logger = require('./logger');
+const logger = new Logger();
+
+logger.on('messageLogged', (args) => {
+    console.log('Listener called', args);
+});
+
+logger.log('message');
 
 //Section 5 -- File Module
 
@@ -61,5 +68,3 @@ sayHello('João')
 
 //global == window in browser although they are not added directly
 //works with modules, every file is a module and needs to be exported to be referenced/used just like in react
-
-*/
