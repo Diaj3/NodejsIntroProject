@@ -10,13 +10,12 @@ Run with nodemon [filename] for instant changes to be done while running
 */
 
 const Joi = require('joi');  //For input validation
-
 const express = require('express');
-
 const app = express(); //app.get() ; post(); put(); delete();
 
 app.use(express.json()); //Adding middleware for JSON to be enable
 
+//Simple Database
 const activities = [
     { id: 1, name: 'ac1'},
     { id: 2, name: 'ac2'},
@@ -31,6 +30,14 @@ app.get('/api/activities', (req, res) => {
     res.send(activities);
 });
 
+app.get('/api/activities/:id', (req, res) => {
+    let activity = activities.find(c => c.id === parseInt(req.params.id));
+    if (!activity) {
+        return res.status(404).send('The activity with the given id was not found');
+    }
+    res.send(activity);
+});
+
 app.post('/api/activities', (req, res) => {
      
     //Input validation with Joi
@@ -43,15 +50,8 @@ app.post('/api/activities', (req, res) => {
     console.log(result);
 
     if (result.error) {
-        res.status(400).send(result.error.details[0].message);
-        return;
+        return res.status(400).send(result.error.details[0].message);
     }
-
-    //Input validation without Joi 
-    /* if (!req.body.name || req.body.name.length < 3) {
-        res.status(400).send('Name is required and should be minimum 3 characters');
-        return;
-    } */
 
     const acc = {
         id: activities.length + 1,
@@ -61,15 +61,45 @@ app.post('/api/activities', (req, res) => {
     res.send(acc);
 });
 
-app.get('/api/activities/:id', (req, res) => {
-    let activity = activities.find(c => c.id === parseInt(req.params.id));
+app.put('/api/activities/:id', (req, res) => {
+    //Look up the activity, if not existing, return 404
+    //if invalid -> return 400
+    
+    const activity = activities.find(c => c.id === parseInt(req.params.id));
     if (!activity) {
-        res.status(404).send('The activity with the given id was not found');
+        return res.status(404).send('The activity with the given id was not found');
     }
+
+    const schema = Joi.object({
+        name: Joi.string().min(3).required()
+    });
+
+    const result = schema.validate(req.body);
+
+    //If error -> return error
+    if (result.error) {
+        return res.status(400).send(result.error.details[0].message);
+    }
+
+    activity.name = req.body.name;
+
     res.send(activity);
 });
 
-//Port
+app.delete('/api/activities/:id', (req, res) => {
+
+    const activity = activities.find(c => c.id === parseInt(req.params.id));
+    if (!activity) {
+        return res.status(404).send('The activity with the given id was not found');
+    }
+
+    const index = activities.indexOf(activity);
+    activities.splice(index, 1);
+
+    res.send(activity);
+})
+
+//Port Config
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}`));
 
