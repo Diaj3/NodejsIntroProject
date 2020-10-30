@@ -39,9 +39,9 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
         res.send('Hello World');
     });
     
-    //List all the activities in the collection <--------------------------------------------- TO FIX
+    //List all the activities in the collection
     app.get('/api/activities', (req, res) => {
-        dbo.collection('activity').findOne({}, (err, result) => {
+        dbo.collection("activity").find({}).toArray((err, result) => {
             if (err) throw err;
             console.log(result);
             res.send(result);
