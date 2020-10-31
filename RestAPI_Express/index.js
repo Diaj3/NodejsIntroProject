@@ -28,13 +28,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
     
     const dbo = db.db("hypermood");
 
-    //Simple Database
-    const activities = [
-        { id: 1, name: 'ac1'},
-        { id: 2, name: 'ac2'},
-        { id: 3, name: 'ac3'}
-    ]
-
     app.get('/', (req, res) => {
         res.send('Hello World');
     });
@@ -90,45 +83,39 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
             res.send(acc);
         });
     });
-    
-    // ############################################################ TODO
 
+    //Update activity by it's ID
     app.put('/api/activities/:id', (req, res) => {
-        //Look up the activity, if not existing, return 404
-        //if invalid -> return 400
-        
-        const activity = activities.find(c => c.id === parseInt(req.params.id));
-        if (!activity) {
-            return res.status(404).send('The activity with the given id was not found');
-        }
-    
         const schema = Joi.object({
-            name: Joi.string().min(3).required()
+            name: Joi.string().min(3).max(70).required(),
+            description: Joi.string().min(3).max(500).optional()
         });
-    
         const result = schema.validate(req.body);
-    
-        //If error -> return error
+
         if (result.error) {
             return res.status(400).send(result.error.details[0].message);
         }
-    
-        activity.name = req.body.name;
-    
-        res.send(activity);
+
+        var myquery = { _id: new ObjectID(req.params.id) };
+        var newvalues = { $set: {name: req.body.name, description: req.body.description } };
+        dbo.collection('activity').update(myquery, newvalues, (err, result) => {
+            if (err) {
+                res.status(404).send('The activity with the given id was not found');
+                throw err;
+            }
+            console.log("Document Updated, result: ", result);
+            res.send(result);
+        });
     });
     
+    //Delete an activity by it's ID
     app.delete('/api/activities/:id', (req, res) => {
-    
-        const activity = activities.find(c => c.id === parseInt(req.params.id));
-        if (!activity) {
-            return res.status(404).send('The activity with the given id was not found');
-        }
-    
-        const index = activities.indexOf(activity);
-        activities.splice(index, 1);
-    
-        res.send(activity);
+
+        dbo.collection('activity').deleteOne({ _id : new ObjectID(req.params.id)}, (err, result) => {
+            if (err) throw err;
+            console.log('RES: ', result);
+            res.send(result);
+        });
     })
 
 })
