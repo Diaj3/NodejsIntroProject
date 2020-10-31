@@ -24,12 +24,13 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
 
     if (err) {
         console.log(`Error ${err}`);
+        throw err;
     }
     
     const dbo = db.db("hypermood");
 
     app.get('/', (req, res) => {
-        res.send('Hello World');
+        res.send('Default App Page');
     });
     
     //List all the activities in the collection
@@ -43,8 +44,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
     
     //Fetch a specific activity
     app.get('/api/activities/:id', (req, res) => {
-        console.log('ID PASSED: ', req.params.id);
-
         dbo.collection('activity').findOne({"_id" : new ObjectID(req.params.id)}, (err, result) => {
             if (err) throw err;
 
@@ -65,7 +64,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
             description: Joi.string().min(3).max(500).optional()
         });
         const result = schema.validate(req.body);
-        console.log(result);
 
         if (result.error) {
             return res.status(400).send(result.error.details[0].message);
@@ -78,8 +76,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
 
         dbo.collection('activity').insertOne(acc, (err, result) => {
             if (err) throw err;
-            console.log('RES: ', result);
-            console.log('ACC: ', acc);
             res.send(acc);
         });
     });
@@ -103,7 +99,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
                 res.status(404).send('The activity with the given id was not found');
                 throw err;
             }
-            console.log("Document Updated, result: ", result);
             res.send(result);
         });
     });
@@ -113,7 +108,6 @@ MongoClient.connect('mongodb://localhost:27017/hypermood', (err, db) => {
 
         dbo.collection('activity').deleteOne({ _id : new ObjectID(req.params.id)}, (err, result) => {
             if (err) throw err;
-            console.log('RES: ', result);
             res.send(result);
         });
     })
